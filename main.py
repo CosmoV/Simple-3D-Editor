@@ -53,7 +53,7 @@ class DrawEngine(QWidget):
 		painter.setPen(QColor(0,0,0))
 		center = getAreaCenter(QPoint(0, 0), QPoint(self.width(), self.height()))
 
-		for i in BresenhamLine(QPoint(center.x(), center.y()), QPoint(center.x() + 100, center.y() - 50)):
+		for i in BresenhamLine(QPoint(center.x(), center.y()), QPoint(center.x(), center.y() - 200)):
 			painter.drawPoint(i)
 			print(i)
 		painter.end()
@@ -63,7 +63,7 @@ class DrawEngine(QWidget):
 
 	def mousePressEvent(self, event):
 		self.pressed = True
-		self.repaint()
+		#self.repaint()
 		self.pressed = False
 
 app = QApplication(sys.argv)

@@ -1,5 +1,7 @@
 from math import sqrt
 
+from PyQt5.QtCore import QPoint
+
 
 
 class Line():
@@ -16,7 +18,7 @@ class Line():
 			self.a = QPoint(0,0)
 			self.b = self.a
 
-	def setPoints(self, a, b):
+	def setPoints(self, a, b):   
 		self.a, self.b = a, b
 
 	@property
@@ -39,6 +41,29 @@ class Line():
 		return sqrt(float((self.a.x() - self.b.x())**2 + (self.a.y() - self.b.y())**2))
 
 
+class GPoint():
+
+	def __init__(self, x,y,z):
+		self.x = x
+		self.y = y
+		self.z = z
+		self.screenCoords = QPoint(0,0)
+
+	def x(self):
+		return self.x
+
+	def y(self):
+		return self.y
+
+	def z(self):
+		return self.z
+
+
+	def __str__(self):
+		return 'X: {0}, Y: {1}, Z: {2}'.format(self.x, self.y, self.z)
+
+
+
 def getAreaCenter(a, b):
 
 	dx, dy = abs(a.x() - b.x()), abs(a.y() - b.y())
@@ -46,17 +71,53 @@ def getAreaCenter(a, b):
 
 
 def BresenhamLine(leftP, rightP):
- 
-	deltaErr = abs(float(leftP.y() - rightP.y()) / float(leftP.x() - rightP.x()))
-	leftP, rightP = (leftP, rightP) if leftP.x() < rightP.x() else (rightP, leftP)
-	yield QPoint(leftP.x(), rightP.x())
-	err, yinc, y = deltaErr, 1 if leftP.y() < rightP.y() else -1, min(leftP.y(), rightP.y())
-	for x in range(leftP.x() + 1, rightP.x() + 1):
-		if err > 0.5:
-			err -= 1.0
-			y += yinc
-		err += deltaErr
-		yield QPoint(x, y) 
+	if leftP.x() != rightP.x():
+		deltaErr = abs(float(leftP.y() - rightP.y()) / float(leftP.x() - rightP.x()))
+		leftP, rightP = (leftP, rightP) if leftP.x() < rightP.x() else (rightP, leftP)
+		yield QPoint(leftP.x(), rightP.y())
+		err, yinc, y = deltaErr, 1 if leftP.y() < rightP.y() else -1, min(leftP.y(), rightP.y())
+		for x in range(leftP.x() + 1, rightP.x() + 1):
+			if err > 0.5:
+				err -= 1.0
+				y += yinc
+			err += deltaErr
+			yield QPoint(x, y) 
+	else: 
+		for i in range(min(leftP.y(), rightP.y()), max(leftP.y(), rightP.y()) + 1):
+			yield QPoint(leftP.x(), i) 
+
+
+class Edge(Line):
+	pass
+
+class Face():
+
+
+	def Square(self):
+		pass
+
+class Triangle():
+
+	def __init__(self, a,b,c):
+		self.a = a
+		self.b = b
+		self.c = c
+
+
+
+class ShapeAbstract():
+
+	def getEdges(self):
+		pass
+
+	def getVertices(self):
+		pass
+	
+	def getFaces(self):
+		pass
+
+	def Volume(self):
+		pass
 
 
 
