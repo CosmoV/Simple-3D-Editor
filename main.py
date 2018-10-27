@@ -1,7 +1,9 @@
 import sys
 from random import randint
 
-from PyQt5.QtCore import Qt, QTimer, QSize
+from geometry import *
+
+from PyQt5.QtCore import Qt, QTimer, QSize, QPoint
 from PyQt5.QtGui import QPainter, QColor, QFont
 from PyQt5.QtWidgets import (QApplication, QWidget, QLabel, QVBoxLayout, QHBoxLayout,
 	QFileDialog, QGridLayout, QPushButton, QMainWindow, QLineEdit, QTextEdit, QTabWidget, QSizePolicy,
@@ -9,11 +11,17 @@ from PyQt5.QtWidgets import (QApplication, QWidget, QLabel, QVBoxLayout, QHBoxLa
 	)
 
 
-class Engine(QWidget):
+class DrawEngine(QWidget):
 
 	def __init__(self):
 		super().__init__()
-		self.pressed = False
+		self.paintEventHandler = lambda event, f: True
+		self.image = set()
+		self.buffImage = set()
+
+
+	def _paint(self, event, f):
+		f(event)
 
 	def paintFuncs(self):
 		self.onPaint()
@@ -40,8 +48,17 @@ class Engine(QWidget):
 		painter.end()
 
 	def paintEvent(self, event):
-		self.onPaint()
-		self.byMousePress()
+		painter = QPainter()
+		painter.begin(self) 
+		painter.setPen(QColor(0,0,0))
+		center = getAreaCenter(QPoint(0, 0), QPoint(self.width(), self.height()))
+
+		for i in BresenhamLine(QPoint(center.x(), center.y()), QPoint(center.x() + 100, center.y() - 50)):
+			painter.drawPoint(i)
+			print(i)
+		painter.end()
+		#self.onPaint()
+		#self.byMousePress()
 
 
 	def mousePressEvent(self, event):
@@ -51,7 +68,7 @@ class Engine(QWidget):
 
 app = QApplication(sys.argv)
 
-widget = Engine()
+widget = DrawEngine()
 widget.resize(700, 500)
 widget.show()
 
