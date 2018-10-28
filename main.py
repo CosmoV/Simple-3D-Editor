@@ -7,7 +7,7 @@ from structures import *
 
 from math import pi
 
-from PyQt5.QtCore import Qt, QTimer, QSize, QPoint, QTimer
+from PyQt5.QtCore import Qt, QTimer, QSize, QPoint, QPointF, QTimer
 from PyQt5.QtGui import QPainter, QColor, QFont, QPixmap
 from PyQt5.QtWidgets import (QApplication, QWidget, QLabel, QVBoxLayout, QHBoxLayout,
 	QFileDialog, QGridLayout, QPushButton, QMainWindow, QLineEdit, QTextEdit, QTabWidget, QSizePolicy,
@@ -39,12 +39,13 @@ class DrawEngine(QWidget):
 			center = getAreaCenter(QPoint(0, 0), QPoint(self.width(), self.height()))
 
 			a = Point(float(center.x() + 100), center.y(), -100)
-			b = Point(center.x() -100, center.y(), -100)
-			c = Point(center.x(), center.y() -100, -70)
-			d = Point(center.x(), center.y() +50, 0)
+			b = Point(center.x() -100, center.y(), -150)
+			c = Point(center.x(), center.y() - 73, -50)
+			d = Point(center.x(), center.y() + 50, -0)
 
 			self.shapes.append(Tetrahedron(a,b,c,d))
 
+			self.shapes[-1].setBorderColor(QColor(129,0,38))
 
 	def _paint(self, event, f):
 		f(event)
@@ -54,7 +55,7 @@ class DrawEngine(QWidget):
 
 	def deltaToUngle(self, pos):
 		normalCoef = 1
-		self.dx = (pos.x() - self.mousePrevPos.x())/normalCoef * pi / 180.0
+		self.dx = (pos.x() - self.mousePrevPos.x())/ normalCoef * pi / 180.0
 		self.dy = (pos.x() - self.mousePrevPos.x())/normalCoef * pi / 180.0
 
 		self.dy, self.dx = self.dx, self.dy
@@ -63,17 +64,29 @@ class DrawEngine(QWidget):
 		self.dx = 0
 		self.dy = 0
 
+	def drawShape(self, shape):
+		self.painter.setPen(shape.getBorderColor())
+		for j in drawEdges(shape):
+			self.painter.drawPoint(j)
+		self.painter.setPen(shape.getCenterColor())
+		for i in drawPoint(shape.getCenter()):
+			print('----', i)
+			self.painter.drawPoint(i)
+
+
 	def _fill(self):
 		self.buffImage = QPixmap(self.width(), self.height())
 		self.painter = QPainter()
 		self.painter.begin(self.buffImage) 
 		self.painter.setPen(QColor(129,0,38))
 		for shape in self.shapes:
-			#shape.turnAroundX(self.dx)
-			shape.turnAroundY(self.dy)
+			shape.turnAroundX(self.dx)
+			#shape.turnAroundY(self.dy)
+			self.drawShape(shape)
+			'''
 			for j in drawEdges(shape):
 				self.painter.drawPoint(j)
-
+			'''
 		self.painter.end()
 
 
@@ -124,7 +137,6 @@ class DrawEngine(QWidget):
 		self.pressed = False
 
 	def mouseMoveEvent(self, event):
-		print(event.pos())
 		self.deltaToUngle(event.pos())
 		self.mousePrevPos = event.pos()
 

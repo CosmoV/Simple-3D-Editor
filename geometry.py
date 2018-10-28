@@ -1,58 +1,52 @@
 from math import sqrt
 from collections import namedtuple
 
-from PyQt5.QtCore import QPoint
+from PyQt5.QtCore import QPoint, QPointF
 
 from structures import *
 from functools import reduce
 
 
 
-class Matrix():
-
-	def __init__(self, rows = None):
-		self.rows = rows if rows else []
-
-	def addRow(self, row):
-		self.rows.append(row)
-
-	def rows(self):
-		return self.rows
-
-	def __mul__(self, other):
-		res = [[0 for _ in range(len(rows[0]))] for _ in range(len(rows))]
-		for i in range(len(rows)):
-			for j in range(len(rows[0])):
-				res[i][j] = sum(self.rows[i][k] * other.rows[k][i] for k in range(len(rows[0])))
-		return Matrix(res)
-
-
 def getAreaCenter(a, b):
-
 	dx, dy = abs(a.x() - b.x()), abs(a.y() - b.y())
 	return QPoint(a.x() + dx // 2 if a.x() < b.x() else b.x() + dx // 2, a.y() + dy // 2 if a.y() < b.y() else b.y() + dy // 2)
 
+def dist(a,b):
+	return sqrt((a.x() - b.x())**2 + (a.y() - b.y())**2 + (a.z() - b.z())**2)  
 
+def drawPoint(p):
+	counter = 0
+	for i in range(int(p.x()) - 2, int(p.x() + 3)):
+		for j in range(int(p.y()) - 1, int(p.y() + 2)):
+				yield QPoint(i, j)	
+	for i in range(int(p.x()) - 1, int(p.x()) + 1):
+		yield QPoint(i, int(p.y()) - 2)
+		yield QPoint(i, int(p.y()) + 2)
+	
 def BresenhamLine(leftP, rightP):
 	if leftP.x() != rightP.x():
 		deltaErr = abs(float(leftP.y() - rightP.y()) / float(leftP.x() - rightP.x()))
-		leftP, rightP = (leftP, rightP) if leftP.x() < rightP.x() else (rightP, leftP)
-		yield QPoint(leftP.x(), leftP.y())
-		err, yinc, y = deltaErr, 1 if leftP.y() < rightP.y() else -1, leftP.y()
-		for x in range(int(leftP.x()) + 1, int(rightP.x()) + 1):
-			if err > 0.5:
-				err -= 1.0
-				y += yinc
-			err += deltaErr
-			yield QPoint(x, y) 
+		if deltaErr < 1:
+			leftP, rightP = (leftP, rightP) if leftP.x() < rightP.x() else (rightP, leftP)
+			yield QPointF(leftP.x(), leftP.y())
+			err, yinc, y = 0.0, 1.0 if leftP.y() < rightP.y() else -1.0, leftP.y()
+			for x in range(int(leftP.x()) + 1, int(rightP.x()) + 1):
+				err += deltaErr
+				if err >= 0.5:
+					err -= 1.0
+					y += yinc
+				yield QPoint(x, y)
+		else:
+			for i in BresenhamLine(Point(leftP.y(), leftP.x()), Point(rightP.y(), rightP.x())):
+				yield QPoint(i.y(), i.x())
 	else: 
 		a = int(min(leftP.y(), rightP.y()))
 		for i in range(1 if not a else a, int(max(leftP.y(), rightP.y()) + 1)):
-			yield QPoint(leftP.x(), i) 
+			yield QPointF(leftP.x(), i) 
 
 
 def getBorder(edgesList):
-
 	for i in (BresenhamLine(edge.first, edge.second) for edge in edgesList):
 		for point in i:
 			yield point
@@ -84,6 +78,6 @@ def getArea(pointsList):
 
 
 def drawEdges(shape):
-	print(len(shape.getEdges()))
 	yield from getBorder(shape.getEdges())
+
 
