@@ -8,6 +8,7 @@ from PyQt5.QtWidgets import (QApplication, QWidget, QLabel, QVBoxLayout, QHBoxLa
 from PyQt5.QtCore import Qt, QTimer, QSize, QPoint, QTimer, QRectF, QRect
 
 from geometry import * 
+from math import cos, sin
 
 
 
@@ -61,25 +62,46 @@ class Edge(Line):
 
 class Point():
 
-	def __init__(self, x,y,z):
-		self.x = x
-		self.y = y
-		self.z = z
+	def __init__(self, x,y,z = 0):
+		self._x = x
+		self._y = y
+		self._z = z
 		self.screenCoords = QPoint(0,0)
 
 	def x(self):
-		return self.x
+		return self._x
 
 	def y(self):
-		return self.y
+		return self._y
 
 	def z(self):
-		return self.z
+		return self._z
+
+
+	def __str__(self):
+		return 'X: {0}, Y: {1}, Z: {2}'.format(self._x, self._y, self._z)
+
+
+class PointI():
+
+	def __init__(self, x,y,z = 0.0):
+		self._x = x
+		self._y = y
+		self._z = z
+		self.screenCoords = QPoint(0,0)
+
+	def x(self):
+		return int(self._x)
+
+	def y(self):
+		return (self._y)
+
+	def z(self):
+		return (self._z)
 
 
 	def __str__(self):
 		return 'X: {0}, Y: {1}, Z: {2}'.format(self.x, self.y, self.z)
-
 
 class Face():
 
@@ -139,7 +161,59 @@ class Triangle(ShapeAbstract, QGraphicsItem):
 
 
 
+class Tetrahedron(ShapeAbstract):
 
+	def __init__(self, a, b, c, d):
+		super().__init__()
+		self.vertices = [a,b,c,d]
+		self.createEdges()
+
+	def createEdges(self):
+		self.edges = []
+		for i in range(len(self.vertices)):
+			for j in range(i+1, len(self.vertices)):
+				self.edges.append(Edge(self.vertices[i], self.vertices[j]))
+
+	def getVertices(self):
+		return self.vertices
+
+	def getEdges(self):
+		return self.edges
+
+	'''
+	x'=x*cos(L)+z*sin(L);
+	y'=y;
+	z'=-x*sin(L)+z*cos(L);
+	'''
+	def _turnAroundY(self, p, alpha):
+		return Point(p.x() * cos(alpha) + p.z() * sin(alpha), p.y(), - p.x() * sin(alpha) + p.z() * cos(alpha))  
+
+	def turnAroundY(self, alpha):
+		buff, self.vertices = self.vertices, []
+		
+		for v in buff:
+			self.vertices.append(self._turnAroundY(v, alpha))
+			print('{0}\n{1}\n--------------'.format(v, self.vertices[-1]))
+		
+		self.createEdges()
+
+
+	'''x'=x;
+	y':=y*cos(L)+z*sin(L) ;
+	z':=-y*sin(L)+z*cos(L) ;
+	'''
+
+	def _turnAroundX(self, p, alpha):
+		return Point(p.x(), p.y() * cos(alpha) + p.z() * sin(alpha), - p.y() * sin(alpha) + p.z() * cos(alpha))  
+
+	def turnAroundX(self, alpha):
+		buff, self.vertices = self.vertices, []
+		
+		for v in buff:
+			self.vertices.append(self._turnAroundX(v, alpha))
+			print('{0}\n{1}\n--------------'.format(v, self.vertices[-1]))
+		
+		self.createEdges()
 
 
 
