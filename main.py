@@ -1,14 +1,19 @@
 import sys
 from random import randint
+from functools import reduce
 
 from geometry import *
+from structures import *
 
-from PyQt5.QtCore import Qt, QTimer, QSize, QPoint
-from PyQt5.QtGui import QPainter, QColor, QFont
+from PyQt5.QtCore import Qt, QTimer, QSize, QPoint, QTimer
+from PyQt5.QtGui import QPainter, QColor, QFont, QPixmap
 from PyQt5.QtWidgets import (QApplication, QWidget, QLabel, QVBoxLayout, QHBoxLayout,
 	QFileDialog, QGridLayout, QPushButton, QMainWindow, QLineEdit, QTextEdit, QTabWidget, QSizePolicy,
-	QGraphicsView, QGraphicsItem
+	QGraphicsView, QGraphicsItem, QGraphicsScene
 	)
+
+
+
 
 
 class DrawEngine(QWidget):
@@ -17,7 +22,12 @@ class DrawEngine(QWidget):
 		super().__init__()
 		self.paintEventHandler = lambda event, f: True
 		self.image = set()
-		self.buffImage = set()
+		self.buffImage = QPixmap(self.width(), self.height())
+		self.shapes = []
+
+	def resizeEvent(self, event):
+		self.buffImage = QPixmap(self.width(), self.height())
+		self._fill()
 
 
 	def _paint(self, event, f):
@@ -47,29 +57,62 @@ class DrawEngine(QWidget):
 
 		painter.end()
 
-	def paintEvent(self, event):
-		painter = QPainter()
-		painter.begin(self) 
-		painter.setPen(QColor(0,0,0))
+	def _fill(self):
+		self.painter = QPainter()
+		self.painter.begin(self.buffImage)
+		#self.painter.drawPixmap(buffImage)
+		
+		self.painter.setPen(QColor(129,0,38))
 		center = getAreaCenter(QPoint(0, 0), QPoint(self.width(), self.height()))
 
-		for i in BresenhamLine(QPoint(center.x(), center.y()), QPoint(center.x(), center.y() - 200)):
-			painter.drawPoint(i)
-			print(i)
-		painter.end()
+		a = QPoint(center.x() + 100, center.y())
+		b = QPoint(center.x() -100, center.y())
+		c = QPoint(center.x(), center.y() -50)
+
+		triangle = Triangle(a,b,c)
+		area = getArea(triangle.getVertices())
+
+		for i in fillTriangle(area, triangle):
+			self.painter.drawPoint(i)
+
+		self.painter.setPen(QColor(255,128,0))
+		for i in getBorder([Edge(a,b), Edge(b,c), Edge(a,c)]):
+
+			self.painter.drawPoint(i)
+
+		'''
+		a, b, c = QPoint(center.x(), center.y()-50), QPoint(center.x()+15, center.y()-70), QPoint(center.x()-100, center.y()+60)
+		for i in getBorder([Edge(a,b), Edge(b,c), Edge(c,a)]):
+			painter.drawPoint(i)		
+		'''
+		self.painter.end()
+
+	def paintEvent(self, event):
+		self.painter = QPainter()
+		self.painter.begin(self)
+		self.painter.drawPixmap(0,0, self.buffImage)
+		self.painter.end()
 		#self.onPaint()
 		#self.byMousePress()
 
 
 	def mousePressEvent(self, event):
 		self.pressed = True
-		#self.repaint()
+		self._fill()
+		self.repaint()
 		self.pressed = False
+
+
+
 
 app = QApplication(sys.argv)
 
 widget = DrawEngine()
 widget.resize(700, 500)
 widget.show()
+
+timer = QTimer()
+
+#timer.timeout.connect()
 
 sys.exit(app.exec_())

@@ -1,67 +1,10 @@
 from math import sqrt
+from collections import namedtuple
 
 from PyQt5.QtCore import QPoint
 
-
-
-class Line():
-
-	def __init__(self, a = None, b = None):
-
-		def xor(a, b):
-			return bool(a) != bool(b)
-		
-		if not xor(a,b) and a:
-			self.a = a
-			self.b = b
-		else:
-			self.a = QPoint(0,0)
-			self.b = self.a
-
-	def setPoints(self, a, b):   
-		self.a, self.b = a, b
-
-	@property
-	def first(self):
-		return self.a
-
-	@first.setter
-	def first_set(self, value):
-		self.a = value
-	
-	@property
-	def second(self):
-		return self.b
-
-	@second.setter
-	def second(self, value):
-		self.b = value
-
-	def __len__(self):
-		return sqrt(float((self.a.x() - self.b.x())**2 + (self.a.y() - self.b.y())**2))
-
-
-class GPoint():
-
-	def __init__(self, x,y,z):
-		self.x = x
-		self.y = y
-		self.z = z
-		self.screenCoords = QPoint(0,0)
-
-	def x(self):
-		return self.x
-
-	def y(self):
-		return self.y
-
-	def z(self):
-		return self.z
-
-
-	def __str__(self):
-		return 'X: {0}, Y: {1}, Z: {2}'.format(self.x, self.y, self.z)
-
+from structures import *
+from functools import reduce
 
 
 def getAreaCenter(a, b):
@@ -74,8 +17,8 @@ def BresenhamLine(leftP, rightP):
 	if leftP.x() != rightP.x():
 		deltaErr = abs(float(leftP.y() - rightP.y()) / float(leftP.x() - rightP.x()))
 		leftP, rightP = (leftP, rightP) if leftP.x() < rightP.x() else (rightP, leftP)
-		yield QPoint(leftP.x(), rightP.y())
-		err, yinc, y = deltaErr, 1 if leftP.y() < rightP.y() else -1, min(leftP.y(), rightP.y())
+		yield QPoint(leftP.x(), leftP.y())
+		err, yinc, y = deltaErr, 1 if leftP.y() < rightP.y() else -1, leftP.y()
 		for x in range(leftP.x() + 1, rightP.x() + 1):
 			if err > 0.5:
 				err -= 1.0
@@ -87,38 +30,31 @@ def BresenhamLine(leftP, rightP):
 			yield QPoint(leftP.x(), i) 
 
 
-class Edge(Line):
-	pass
-
-class Face():
-
-
-	def Square(self):
-		pass
-
-class Triangle():
-
-	def __init__(self, a,b,c):
-		self.a = a
-		self.b = b
-		self.c = c
+def getBorder(edgesList):
+	for i in (BresenhamLine(edge.first, edge.second) for edge in edgesList):
+		for point in i:
+			yield point
 
 
-
-class ShapeAbstract():
-
-	def getEdges(self):
-		pass
-
-	def getVertices(self):
-		pass
-	
-	def getFaces(self):
-		pass
-
-	def Volume(self):
-		pass
+def pointIn(triangle, point):
+	a, b, c = triangle.getA(), triangle.getB(), triangle.getC()
+	f = (a.x() - point.x()) * (b.y() - a.y()) - (b.x() - a.x()) * (a.y() - point.y()) < 0
+	s = (b.x() - point.x()) * (c.y() - b.y()) - (c.x() - b.x()) * (b.y() - point.y()) < 0
+	t = (c.x() - point.x()) * (a.y() - c.y()) - (a.x() - c.x()) * (c.y() - point.y()) < 0
+	return f and s and t if f else not f and not s and not t
 
 
+def fillTriangle(area, triangle):
+	for i in range(area.a.x(), area.b.x() + 1):
+		for j in range(area.a.y(), area.b.y() + 1):
+			point = QPoint(i, j)
+			if pointIn(triangle, point):
+				yield point
 
 
+def getArea(pointsList):
+	minx = reduce(lambda a, b: a if a < b.x() else b.x(), pointsList, pointsList[0].x())
+	maxx = reduce(lambda a, b: a if a > b.x() else b.x(), pointsList, pointsList[0].x())
+	miny = reduce(lambda a, b: a if a < b.y() else b.y(), pointsList, pointsList[0].y())
+	maxy = reduce(lambda a, b: a if a > b.y() else b.y(), pointsList, pointsList[0].y())
+	return namedtuple('Area', 'a b')(QPoint(minx, miny), QPoint(maxx, maxy))
